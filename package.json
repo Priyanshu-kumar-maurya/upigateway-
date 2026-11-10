@@ -1,0 +1,48 @@
+{
+  "name": "upigateway",
+  "version": "1.0.0",
+  "description": "⚡ Zero-Fee Open-Source UPI Payment Gateway for Node.js, Express & React (Direct Bank Settlement, Dynamic QR, Mobile Intent & Webhooks)",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "demo": "node examples/express-demo/server.js",
+    "test": "node test/gateway.test.js"
+  },
+  "keywords": [
+    "upi",
+    "upi-gateway",
+    "payment-gateway",
+    "zero-fee",
+    "india-payments",
+    "npci",
+    "phonepe",
+    "gpay",
+    "paytm",
+    "bhim",
+    "qr-code",
+    "express",
+    "nodejs",
+    "react",
+    "direct-bank-settlement"
+  ],
+  "author": "Priyanshu Maurya <pk1062417@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Priyanshu-kumar-maurya/upigateway-.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Priyanshu-kumar-maurya/upigateway-/issues"
+  },
+  "homepage": "https://github.com/Priyanshu-kumar-maurya/upigateway-#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "qrcode": "^1.5.3"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

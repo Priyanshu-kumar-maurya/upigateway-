@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UPIGateway - Zero-Fee Checkout Demo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #000000;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: #111111;
+      border: 1px solid #262626;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    }
+    .badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #f9ce3f, #e1306c, #833ab4);
+      color: #fff;
+      font-weight: 800;
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+    h1 { font-size: 22px; margin-bottom: 6px; }
+    p.sub { font-size: 13px; color: #888; margin-bottom: 24px; }
+    .amount-box {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 20px;
+    }
+    .amount-box label { font-size: 11px; color: #888; text-transform: uppercase; }
+    .amount-box .price { font-size: 28px; font-weight: 800; color: #00e676; margin-top: 4px; }
+    .btn {
+      width: 100%;
+      background: linear-gradient(135deg, #f9ce3f, #e1306c, #833ab4);
+      color: #fff;
+      border: none;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .qr-box {
+      margin-top: 20px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+    }
+    .qr-box img {
+      width: 200px;
+      height: 200px;
+      background: #fff;
+      padding: 10px;
+      border-radius: 14px;
+      margin-bottom: 12px;
+    }
+    .apps {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+      margin-top: 14px;
+    }
+    .app-link {
+      background: #181818;
+      border: 1px solid #333;
+      color: #fff;
+      padding: 10px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      display: block;
+    }
+    .utr-form {
+      margin-top: 18px;
+      width: 100%;
+    }
+    .utr-form input {
+      width: 100%;
+      background: #181818;
+      border: 1px solid #333;
+      color: #fff;
+      padding: 12px;
+      border-radius: 10px;
+      font-family: monospace;
+      font-size: 14px;
+      margin-bottom: 8px;
+      outline: none;
+    }
+    .success-alert {
+      margin-top: 16px;
+      background: rgba(0, 230, 118, 0.15);
+      border: 1px solid #00e676;
+      color: #00e676;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <span class="badge">⚡ ZERO-FEE UPI GATEWAY</span>
+    <h1>UPIGateway Live Demo</h1>
+    <p class="sub">Direct Bank Settlement without Intermediary Fees</p>
+
+    <div class="amount-box">
+      <label>Demo Checkout Order</label>
+      <div class="price">₹499.00</div>
+    </div>
+
+    <button id="payBtn" class="btn" onclick="initiateOrder()">Pay ₹499 via UPI</button>
+
+    <div id="qrSection" class="qr-box">
+      <img id="qrImg" src="" alt="Dynamic QR">
+      <p style="font-size:12px; color:#888;">Scan with GPay, PhonePe, Paytm, BHIM</p>
+
+      <div class="apps">
+        <a id="gpayLink" class="app-link" href="#">🔵 GPay</a>
+        <a id="phonepeLink" class="app-link" href="#">🟣 PhonePe</a>
+        <a id="paytmLink" class="app-link" href="#">🟦 Paytm</a>
+        <a id="bhimLink" class="app-link" href="#">🟧 BHIM</a>
+      </div>
+
+      <div class="utr-form">
+        <input id="utrInput" type="text" maxlength="12" placeholder="Enter 12-digit UTR after payment">
+        <button class="btn" onclick="verifyUTR()">Verify Payment</button>
+      </div>
+    </div>
+
+    <div id="successBox" class="success-alert"></div>
+  </div>
+
+  <script>
+    let currentOrder = null;
+
+    async function initiateOrder() {
+      const btn = document.getElementById('payBtn');
+      btn.innerText = 'Generating QR...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/upi/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: 499,
+            customerName: 'Priyanshu Maurya',
+            note: 'UPIGateway Demo Order'
+          })
+        });
+        const data = await res.json();
+        currentOrder = data.order;
+
+        document.getElementById('payBtn').style.display = 'none';
+        document.getElementById('qrSection').style.display = 'flex';
+        document.getElementById('qrImg').src = currentOrder.qrDataUrl;
+
+        document.getElementById('gpayLink').href = currentOrder.appIntents.gpay;
+        document.getElementById('phonepeLink').href = currentOrder.appIntents.phonepe;
+        document.getElementById('paytmLink').href = currentOrder.appIntents.paytm;
+        document.getElementById('bhimLink').href = currentOrder.appIntents.bhim;
+      } catch (err) {
+        alert('Failed to create order: ' + err.message);
+        btn.disabled = false;
+        btn.innerText = 'Pay ₹499 via UPI';
+      }
+    }
+
+    async function verifyUTR() {
+      const utr = document.getElementById('utrInput').value.trim();
+      if (!utr || utr.length !== 12) {
+        alert('Please enter a valid 12-digit UTR / UPI Reference Number');
+        return;
+      }
+
+      const res = await fetch('/api/upi/verify-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: currentOrder.orderId,
+          utr
+        })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        document.getElementById('qrSection').style.display = 'none';
+        const box = document.getElementById('successBox');
+        box.style.display = 'block';
+        box.innerHTML = `✅ <strong>Payment Successful!</strong><br>Order ID: ${data.orderId}<br>UTR: ${data.utr}<br>Status: <strong>PAID (0% MDR)</strong>`;
+      } else {
+        alert('Error: ' + (data.error || 'Verification failed'));
+      }
+    }
+  </script>
+</body>
+</html>
